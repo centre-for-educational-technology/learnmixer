@@ -1,0 +1,102 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function learnmixer_install(){
+
+  learnmixer_create_fields();
+
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function learnmixer_uninstall(){
+
+  // Remove custom created fields
+  $fields = learnmixer_get_fields_and_options();
+  foreach($fields as $field){
+    field_delete_field($field['field_name']);
+  }
+}
+
+/**
+ * Implements hook_enable().
+ */
+function learnmixer_enable(){
+  variable_set('site_frontpage', 'home');
+
+}
+
+/**
+ * Implements hook_disable().
+ */
+function learnmixer_disable(){
+  variable_set('site_frontpage', 'node');
+}
+
+function learnmixer_create_fields(){
+  $fields = learnmixer_get_fields_and_options();
+
+  foreach($fields as $field){
+    learnmixer_create_field($field['field_name'], $field['type'], $field['cardinality'], $field['settings']);
+  }
+
+}
+
+
+/**
+ * [Field types that need to be created are defined here]
+ * @return [array] [returns an array of field options]
+ */
+function learnmixer_get_fields_and_options(){
+  $field_options = array(
+    'lm_field_description' => array(
+      'field_name' => 'lm_field_description',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'settings' => array(),
+    ),
+    'lm_field_featured_image' => array(
+      'field_name' => 'lm_field_featured_image',
+      'type' => 'image',
+      'cardinality' => 1,
+      'settings' => array(
+        'uri_scheme' => 'public',
+        'default_image' => 0,
+      ),
+    ),
+    'lm_field_url' => array(
+      'field_name' => 'lm_field_url',
+      'type' => 'url',
+      'cardinality' => 1,
+      'settings' => array(),
+    ),
+  );
+
+  return $field_options;
+}
+
+/**
+ * Creates custom field
+ * @param  [string] $field_name  [field name]
+ * @param  [string] $field_type  [field type settings]
+ * @param  [integer] $cardinality [cardinality setting]
+ * @param  array  $settings    [Field settings if needed]
+ */
+function learnmixer_create_field($field_name, $field_type, $cardinality, $settings = array()){
+  if(!field_info_field($field_name)){
+    $field = array(
+      'field_name' => $field_name,
+      'type' => $field_type,
+      'entity_types' => array('node'),
+      'cardinality' => $cardinality,
+      'locked' => false,
+      'settings' => $settings,
+    );
+    field_create_field($field);
+  }
+}
+

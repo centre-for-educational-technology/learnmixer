@@ -1,0 +1,249 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function lm_content_types_install(){
+  $content_types = array(
+    'lm_textbook' => array(
+      'type' => 'lm_textbook',
+      'name' => t('e-Textbook'),
+      'has_title' => true,
+      'title_label' => t('Title'),
+    ),
+    'lm_textblock' => array(
+      'type' => 'lm_textblock',
+      'name' => t('TextBlock'),
+      'has_title' => false,
+    ),
+    'lm_mediablock' => array(
+      'type' => 'lm_mediablock',
+      'name' => t('MediaBlock'),
+      'has_title' => false,
+    ),
+  );
+
+  foreach($content_types as $content_type){
+    lm_content_types_create_node_type($content_type);
+    lm_content_types_add_field_instances($content_type['type']);
+
+    variable_set('comment_'.$content_type['type'], COMMENT_NODE_CLOSED);
+  }
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function lm_content_types_uninstall(){
+
+  $content_types = array('lm_textbook', 'lm_textblock', 'lm_mediablock');
+
+  foreach($content_types as $content_type){
+    $result = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('n.type', $content_type)
+      ->execute();
+
+      $nids = array();
+      foreach($result as $row){
+        $nids[] = $row->nid;
+      }
+
+      node_delete_multiple($nids);
+
+      $instances = field_info_instances('node', $content_type);
+      foreach ($instances as $instance_name => $instance){
+        field_delete_instance($instance);
+      }
+
+      node_type_delete($content_type);
+
+      field_purge_batch(1000);
+
+      variable_del('comment_'.$content_type);
+  }
+
+
+}
+
+
+/**
+ * Implements hook_schema().
+ */
+function lm_content_types_schema(){
+  $schema['lm_book_part_relationship'] = array(
+    'description' => 'Stores relationships between textbooks and parts inside textbooks',
+    'fields' => array(
+      'lm_etbid' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'description' => 'e-Textbook id',
+      ),
+      'lm_partid' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'description' => 'part id',
+      ),
+      'lm_partweight' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'description' => 'Where to display part',
+      ),
+    ),
+    'indexes' => array(
+      'lm_etbid' => array('lm_etbid'),
+      'lm_partweight' => array('lm_partweight'),
+    ),
+
+
+  );
+
+  return $schema;
+
+}
+
+function lm_content_types_create_node_type($content_type){
+  if(!in_array($content_type['type'], node_type_get_names())){
+    $type = array(
+      'type' => $content_type['type'],
+      'name' => $content_type['name'],
+      'base' => 'node_content',
+      'custom' => true,
+      'modified' => false,
+      'locked' => false,
+      'module' => 'lm_content_types',
+      'has_title' => $content_type['has_title'],
+    );
+
+    if($type['has_title']){
+      $type['title_label'] = $content_type['title_label'];
+    }
+
+    $type = node_type_set_defaults($type);
+    node_type_save($type);
+
+  }
+}
+
+
+function lm_content_types_add_field_instances($content_type){
+
+  switch($content_type){
+    case('lm_textbook'):
+      $instances = lm_content_types_textbook_instances();
+    break;
+    case('lm_textblock'):
+      $instances = lm_content_types_textblock_instances();
+    break;
+    case('lm_mediablock'):
+      $instances = lm_content_types_mediablock_instances();
+    break;
+
+    default:
+    break;
+  }
+  foreach($instances as $instance){
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = $content_type;
+    field_create_instance($instance);
+  }
+
+}
+
+
+/**
+ * [Defines field instances used for content type: e-Textbook]
+ * @return [array] [returns an array of defined instances]
+ */
+function lm_content_types_textbook_instances(){
+  $instances = array(
+    'lm_field_description' => array(
+      'field_name' => 'lm_field_description',
+      'label' => t('Description'),
+      'description' => t('e-Textbook description'),
+      'settings' => array(
+        'text_processing' => true,
+      ),
+      'widget' => array(
+        'settings' => array(
+          'rows' => 15,
+        ),
+      ),
+      'required' => true,
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'type' => 'text_default',
+        ),
+      ),
+    ),
+    'lm_field_featured_image' => array(
+      'field_name' => 'lm_field_featured_image',
+      'label' => t('Featured image'),
+      'description' => '',
+      'settings' => array(
+        'file_directory' => 'lm_textbook_featured_images',
+      ),
+      'widget' => array(
+        'type' => 'image_image',
+      ),
+      'required' => true,
+    ),
+  );
+
+  return $instances;
+}
+
+/**
+ * [Defines field instances used for content type: textblock]
+ * @return [array] [returns an array of defined instances]
+ */
+function lm_content_types_textblock_instances(){
+  $instances = array(
+    'lm_field_description' => array(
+      'field_name' => 'lm_field_description',
+      'label' => t('Text'),
+      'description' => '',
+      'settings' => array(
+        'text_processing' => true,
+      ),
+      'widget' => array(
+        'settings' => array(
+          'rows' => 15,
+        ),
+      ),
+      'required' => true,
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'type' => 'text_default',
+        ),
+      ),
+    ),
+  );
+
+  return $instances;
+}
+
+
+/**
+ * [Defines field instances used for content type: mediablock]
+ * @return [array] [returns an array of defined instances]
+ */
+function lm_content_types_mediablock_instances(){
+  $instances = array(
+    'lm_field_url' => array(
+      'field_name' => 'lm_field_url',
+      'label' => t('URL'),
+      'description' => '',
+      'required' => true,
+    ),
+  );
+
+  return $instances;
+}
+

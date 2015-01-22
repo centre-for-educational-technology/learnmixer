@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function learnmixer_menu(){
+  $items['home'] = array(
+    'title' => 'Home',
+    'page callback' => 'learnmixer_home_page',
+    'access callback' => true,
+    'file' => 'learnmixer.pages.inc',
+    'weight' => 0,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+

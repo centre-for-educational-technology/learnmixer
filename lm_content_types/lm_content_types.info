@@ -1,0 +1,9 @@
+name = LearnMixer Content types
+description = Content Types needed for Learnmixer
+package = Learnmixer
+core = 7.x
+
+files[] = lm_content_types.install
+files[] = lm_content_types.module
+
+dependencies[] = learnmixer

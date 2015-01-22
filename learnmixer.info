@@ -1,0 +1,10 @@
+name = Learnmixer
+description = Main module for learnmixer
+package = Learnmixer
+core = 7.x
+
+
+files[] = learnmixer.install
+files[] = learnmixer.module
+
+dependencies[] = url
