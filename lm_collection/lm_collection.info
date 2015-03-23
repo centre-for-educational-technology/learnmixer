@@ -1,0 +1,11 @@
+name = Learnmixer Collection
+description = Learnmixer collection content type
+package = Learnmixer
+core = 7.x
+
+
+files[] = lm_collection.install
+files[] = lm_collection.module
+
+dependencies[] = learnmixer
+dependencies[] = lm_microcontent_types

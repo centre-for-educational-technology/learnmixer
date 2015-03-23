@@ -412,9 +412,19 @@ function learnmixer_get_fields_and_options(){
       'field_name' => 'lm_field_subject',
       'type' => 'taxonomy_term_reference',
       'cardinality' => 1,
+      'module' => 'list',
+      'foreign keys' => array(),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
+      ),
       'settings' => array(
         'allowed_values' => array(
-          'vocabulary' => 'lm_subject_voc',
+          array(
+            'vocabulary' => 'lm_subject_voc',
+            'parent' => 0,
+          ),
         ),
       ),
     ),
@@ -422,9 +432,19 @@ function learnmixer_get_fields_and_options(){
       'field_name' => 'lm_field_license',
       'type' => 'taxonomy_term_reference',
       'cardinality' => 1,
+      'module' => 'list',
+      'foreign keys' => array(),
+      'indexes' => array(
+        'value' => array(
+          0 => 'value',
+        ),
+      ),
       'settings' => array(
         'allowed_values' => array(
-          'vocabulary' => 'lm_license_voc',
+          array(
+            'vocabulary' => 'lm_license_voc',
+            'parent' => 0,
+          ),
         ),
       ),
     ),
@@ -432,6 +452,7 @@ function learnmixer_get_fields_and_options(){
 
   return $field_options;
 }
+
 
 /**
  * Creates custom field

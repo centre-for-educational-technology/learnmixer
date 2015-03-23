@@ -76,7 +76,7 @@ function lm_microcontent_types_create_node_type($content_type) {
       'custom' => true,
       'modified' => false,
       'locked' => false,
-      'module' => 'lm_content_types',
+      'module' => 'lm_microcontent_types',
       'has_title' => $content_type['has_title'],
     );
 

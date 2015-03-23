@@ -1,0 +1,23 @@
+<?php
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function lm_collection_form_alter(&$form, &$form_state, $form_id){
+  if($form_id=='lm_collection_node_form'){
+    $voc = taxonomy_vocabulary_machine_name_load('lm_subject_voc');
+    $vid = $voc->vid;
+    $top_level = taxonomy_get_tree($vid, 0, 1);
+    foreach ($top_level as $id => $term) {
+      $options[$term->name] = array();
+      $children = taxonomy_get_tree($vid, $term->tid);
+      foreach ($children as $child) {
+        $options[$term->name][$child->tid] = $child->name;
+      }
+    }
+    array_unshift($options, t('- Select a value -'));
+    $form['lm_field_subject'][LANGUAGE_NONE]['#options'] = $options;
+  }
+
+}

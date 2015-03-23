@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function lm_collection_install(){
+  lm_collection_create_content_type();
+  lm_collection_add_field_instances();
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function lm_collection_uninstall(){
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition("n.type", 'lm_collection')
+    ->execute();
+
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  // delete all nodes
+  node_delete_multiple($nids);
+
+  //delete any remaining field instances
+  $instances = field_info_instances('node', 'lm_collection');
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
+
+
+  node_type_delete('lm_collection');
+
+  //purge all field information
+  field_purge_batch(1000);
+}
+
+function lm_collection_create_content_type(){
+  if(!in_array('lm_collection', node_type_get_names())){
+    $type = array(
+      'type' => 'lm_collection',
+      'name' => t('Collection'),
+      'base' => 'node_content',
+      'custom' => true,
+      'modified' => false,
+      'locked' => false,
+      'module' => 'lm_collection',
+      'has_title' => true,
+      'title_label' => t('Title'),
+    );
+  }
+
+  $type = node_type_set_defaults($type);
+  node_type_save($type);
+}
+
+function lm_collection_add_field_instances(){
+  $instances = array(
+    'lm_field_description' => array(
+      'field_name' => 'lm_field_description',
+      'label' => t('Description'),
+      'description' => t(''),
+      'settings' => array(
+        'text_processing' => false,
+      ),
+      'widget' => array(
+        'settings' => array(
+          'rows' => 5,
+        ),
+      ),
+      'required' => true,
+    ),
+    'lm_field_subject' => array(
+      'field_name' => 'lm_field_subject',
+      'label' => t('Subject'),
+      'default_value' => NULL,
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_select',
+        'type' => 'options_select',
+      ),
+      'required' => true,
+    ),
+    'lm_field_topic' => array(
+      'field_name' => 'lm_field_topic',
+      'label' => t('Topic'),
+      'description' => t(''),
+      'required' => true,
+    ),
+    'lm_field_age_group_min' => array(
+      'field_name' => 'lm_field_age_group_min',
+      'label' => t('Age from:'),
+      'description' => t(''),
+      'required' => true,
+    ),
+    'lm_field_age_group_max' => array(
+      'field_name' => 'lm_field_age_group_max',
+      'label' => t('Age until:'),
+      'description' => t(''),
+      'required' => true,
+    ),
+    'lm_field_license' => array(
+      'field_name' => 'lm_field_license',
+      'label' => t('License'),
+      'default_value' => NULL,
+      'widget' => array(
+        'active' => 1,
+        'module' => 'options',
+        'settings' => array(),
+        'type' => 'options_select',
+      ),
+      'required' => true,
+    ),
+    'field_tags' => array(
+      'field_name' => 'field_tags',
+      'label' => t('Tags'),
+      'description' => t('Separate with commas.'),
+      'type' => 'taxonomy_term_reference',
+      'widget' => array(
+        'type' => 'taxonomy_autocomplete',
+      ),
+    ),
+  );
+  foreach($instances as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'lm_collection';
+    field_create_instance($instance);
+  }
+}

@@ -8,3 +8,4 @@ files[] = lm_microcontent_types.install
 files[] = lm_microcontent_types.module
 
 dependencies[] = learnmixer
+dependencies[] = wysiwyg
