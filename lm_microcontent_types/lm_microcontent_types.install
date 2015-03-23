@@ -1,0 +1,184 @@
+<?php
+
+
+/**
+ * Implements hook_install.
+ */
+function lm_microcontent_types_install(){
+  $content_types = array(
+    'lm_textblock' => array(
+      'type' => 'lm_textblock',
+      'name' => t('Textblock'),
+      'has_title' => false,
+    ),
+    'lm_url' => array(
+      'type' => 'lm_url',
+      'name' => t('URL'),
+      'has_title' => false,
+    ),
+    'lm_embed' => array(
+      'type' => 'lm_embed',
+      'name' => t('Embed'),
+      'has_title' => false,
+    ),
+  );
+
+  foreach($content_types as $content_type) {
+    lm_microcontent_types_create_node_type($content_type);
+    lm_microcontent_types_add_field_instances($content_type['type']);
+
+    variable_set('comment_'.$content_type['type'], COMMENT_NODE_CLOSED);
+  }
+}
+
+/**
+ * Implements hook_uninstall.
+ */
+function lm_microcontent_types_uninstall(){
+  $content_types = array('lm_textblock', 'lm_url', 'lm_embed');
+
+  foreach($content_types as $content_type){
+    $result = db_select('node', 'n')
+      ->fields('n', array('nid'))
+      ->condition('n.type', $content_type)
+      ->execute();
+
+      $nids = array();
+      foreach($result as $row){
+        $nids[] = $row->nid;
+      }
+
+      node_delete_multiple($nids);
+
+      $instances = field_info_instances('node', $content_type);
+      foreach ($instances as $instance_name => $instance){
+        field_delete_instance($instance);
+      }
+
+      node_type_delete($content_type);
+
+      field_purge_batch(1000);
+
+      variable_del('comment_'.$content_type);
+  }
+}
+
+/**
+ * [Creates microcontent node types]
+ * @param  [array] $content_type [information about a microcontent type]
+ */
+function lm_microcontent_types_create_node_type($content_type) {
+  if(!in_array($content_type['type'], node_type_get_names())){
+    $type = array(
+      'type' => $content_type['type'],
+      'name' => $content_type['name'],
+      'base' => 'node_content',
+      'custom' => true,
+      'modified' => false,
+      'locked' => false,
+      'module' => 'lm_content_types',
+      'has_title' => $content_type['has_title'],
+    );
+
+    if($type['has_title']){
+      $type['title_label'] = $content_type['title_label'];
+    }
+
+    $type = node_type_set_defaults($type);
+    node_type_save($type);
+
+  }
+}
+/**
+ * [Instantiates field instances for microcontent types]
+ * @param  [type] $content_type [description]
+ */
+function lm_microcontent_types_add_field_instances($content_type){
+  switch($content_type){
+    case 'lm_textblock':
+      $instances = lm_microcontent_types_textblock_instances();
+    break;
+    case 'lm_url':
+      $instances = lm_microcontent_types_url_instances();
+    break;
+    case 'lm_embed':
+      $instances = lm_microcontent_types_embed_instances();
+    break;
+    default:
+    break;
+  }
+
+  foreach($instances as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = $content_type;
+    field_create_instance($instance);
+  }
+
+}
+
+/**
+ * [sets field instances for content type: textblock]
+ */
+function lm_microcontent_types_textblock_instances(){
+  $instances = array(
+    'lm_field_text_body' => array(
+      'field_name' => 'lm_field_text_body',
+      'label' => t('Text'),
+      'description' => '',
+      'settings' => array(
+        'text_processing' => true,
+      ),
+      'widget' => array(
+        'settings' => array(
+          'rows' => 10,
+        ),
+      ),
+      'required' => true,
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'type' => 'text_default',
+        ),
+      ),
+    ),
+  );
+
+  return $instances;
+}
+
+/**
+ * [sets field instances for content type: url]
+ */
+function lm_microcontent_types_url_instances(){
+  $instances = array(
+    'lm_field_url' => array(
+      'field_name' => 'lm_field_url',
+      'label' => t('URL'),
+      'description' => '',
+      'required' => true,
+    ),
+  );
+  return $instances;
+}
+
+/**
+ * [sets field instances for content type: embed]
+ */
+function lm_microcontent_types_embed_instances(){
+  $instances = array(
+    'lm_field_embed' => array(
+      'field_name' => 'lm_field_embed',
+      'label' => t('Embed'),
+      'required' => true,
+      'settings' => array(
+        'text_processing' => true,
+      ),
+      'widget' => array(
+        'settings' => array(
+          'rows' => 5,
+        ),
+      ),
+    ),
+  );
+  return $instances;
+}

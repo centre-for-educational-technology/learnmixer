@@ -5,6 +5,9 @@
  */
 function learnmixer_install(){
 
+  learnmixer_create_vocabularies_and_add_terms();
+
+
   learnmixer_create_fields();
 
 }
@@ -20,6 +23,14 @@ function learnmixer_uninstall(){
   foreach($fields as $field){
     field_delete_field($field['field_name']);
   }
+
+  // Remove created vocabularies
+  $created_vocabularies = array('lm_subject_voc', 'lm_license_voc');
+  foreach($created_vocabularies as $voc){
+    learnmixer_voc_delete($voc);
+  }
+
+
 }
 
 /**
@@ -27,7 +38,8 @@ function learnmixer_uninstall(){
  */
 function learnmixer_enable(){
   variable_set('site_frontpage', 'home');
-
+  variable_set('jquery_update_jquery_version', '1.10');
+  variable_set('jquery_update_jquery_admin_version', '1.10');
 }
 
 /**
@@ -37,6 +49,9 @@ function learnmixer_disable(){
   variable_set('site_frontpage', 'node');
 }
 
+/**
+ * [get required fields and create them]
+ */
 function learnmixer_create_fields(){
   $fields = learnmixer_get_fields_and_options();
 
@@ -48,6 +63,289 @@ function learnmixer_create_fields(){
 
 
 /**
+ * [Deletes vocabulary]
+ * @param  [string] $vocabulary [vocabulary machine name]
+ */
+function learnmixer_voc_delete($vocabulary){
+  $vocabulary = taxonomy_vocabulary_machine_name_load($vocabulary);
+  if(!empty($vocabulary)){
+    taxonomy_vocabulary_delete($vocabulary->vid);
+  }
+}
+
+/**
+ * [Creates needed vocabularies and adds terms to them]
+ */
+function learnmixer_create_vocabularies_and_add_terms(){
+
+  // Voc (Subject) Start
+  $vocabulary = new stdClass();
+  $vocabulary->name = t('Subject');
+  $vocabulary->description = t('');
+  $vocabulary->machine_name = 'lm_subject_voc';
+
+  taxonomy_vocabulary_save($vocabulary);
+
+  $terms = learnmixer_set_voc_terms('lm_subject_voc');
+
+  foreach($terms as $term) {
+    learnmixer_add_terms_to_voc($vocabulary->vid, $term);
+  }
+  // Voc end
+
+  // Voc (License) start
+  $vocabulary = new stdClass();
+  $vocabulary->name = t('License');
+  $vocabulary->description = t('');
+  $vocabulary->machine_name = 'lm_license_voc';
+
+  taxonomy_vocabulary_save($vocabulary);
+
+  $terms = learnmixer_set_voc_terms('lm_license_voc');
+  foreach($terms as $term) {
+    learnmixer_add_terms_to_voc($vocabulary->vid, $term);
+  }
+  //Voc end
+}
+/**
+ * [Adds terms to vocabulary]
+ * @param  [string/int] $vid [vocabulary id the term is added to]
+ * @param  [array] $one [term to be added. can be hierarchical]
+ */
+function learnmixer_add_terms_to_voc($vid, $one){
+  $term = new stdClass();
+  $term->name = $one['title'];
+  $term->description = $one['description'];
+  $term->format = 'plain_text';
+  $term->vid = $vid;
+  $term->weight = $one['weight'];
+  $term->parent = isset($one['parent']) ? $one['parent'] : 0;
+  taxonomy_term_save($term);
+  if (isset($one['terms']) && is_array($one['terms']) && sizeof($one['terms']) > 0) {
+    foreach($one['terms'] as $one) {
+      $one['parent'] =  $term->tid;
+      learnmixer_add_terms_to_voc($vid, $one);
+    }
+  }
+}
+
+/**
+ * [Sets the required terms to a vocabulary]
+ * @param  [string] $voc_machine_name [machine name of vocabulary]
+ * @return [array] $terms [Array of terms to be added to a vocabulary]
+ */
+function learnmixer_set_voc_terms($voc_machine_name){
+  switch($voc_machine_name){
+    case 'lm_subject_voc':
+      $terms = array(
+        0 => array(
+          'title' => t('Language and literature'),
+          'description' =>'',
+          'weight' => 0,
+          'terms' => array(
+            0 => array(
+              'title' => t('Estonian language'),
+              'description' => '',
+              'weight' => 0,
+            ),
+            1 => array(
+              'title' => t('Literature (the Estonian school)'),
+              'description' => '',
+              'weight' => 1,
+            ),
+            2 => array(
+              'title' => t('Russian language'),
+              'description' => '',
+              'weight' => 2,
+            ),
+            3 => array(
+              'title' => t('Literature (in Russian school)'),
+              'description' => '',
+              'weight' => 3,
+            ),
+          ),
+        ),
+        1 => array(
+          'title' => t('Foreign languages'),
+          'description' => '',
+          'weight' => 1,
+          'terms' => array(
+            0 => array(
+              'title' => t('Foreign language A'),
+              'description' => '',
+              'weight' => 0,
+            ),
+            1 => array(
+              'title' => t('Foreign language B and Estonian as a foreign language'),
+              'description' => '',
+              'weight' => 1,
+            ),
+          ),
+        ),
+        2 => array(
+          'title' => t('Mathematics'),
+          'description' => '',
+          'weight' => 2,
+          'terms' => array(
+            0 => array(
+              'title' => t('Mathematics'),
+              'description' => '',
+              'weight' => 0,
+            ),
+          ),
+        ),
+        3 => array(
+          'title' => t('Natural sciences'),
+          'description' => '',
+          'weight' => 3,
+          'terms' => array(
+            0 => array(
+              'title' => t('Natural science'),
+              'description' => '',
+              'weight' => 0,
+            ),
+            1 => array(
+              'title' => t('Biology'),
+              'description' => '',
+              'weight' => 1,
+            ),
+            2 => array(
+              'title' => t('Geography'),
+              'description' => '',
+              'weight' => 2,
+            ),
+            3 => array(
+              'title' => t('Physics'),
+              'description' => '',
+              'weight' => 3,
+            ),
+            4 => array(
+              'title' => t('Chemistry'),
+              'description' => '',
+              'weight' => 4,
+            ),
+          ),
+        ),
+        4 => array(
+          'title' => t('Social sciences'),
+          'description' => '',
+          'weight' => 4,
+          'terms' => array(
+            0 => array(
+              'title' => t('Human studies'),
+              'description' => '',
+              'weight' => 0,
+            ),
+            1 => array(
+              'title' => t('History'),
+              'description' => '',
+              'weight' => 1,
+            ),
+            2 => array(
+              'title' => t('Society studies'),
+              'description' => '',
+              'weight' => 2,
+            ),
+          ),
+        ),
+        5 => array(
+          'title' => t('Arts'),
+          'description' => '',
+          'weight' => 5,
+          'terms' => array(
+            0 => array(
+              'title' => t('Music'),
+              'description' => '',
+              'weight' => 0,
+            ),
+            1 => array(
+              'title' => t('Art'),
+              'description' => '',
+              'weight' => 1,
+            ),
+          ),
+        ),
+        6 => array(
+          'title' => t('Technology'),
+          'description' => '',
+          'weight' => 6,
+          'terms' => array(
+            0 => array(
+              'title' => t('Manual training'),
+              'description' => '',
+              'weight' => 0,
+            ),
+            1 => array(
+              'title' => t('Crafts and home economics'),
+              'description' => '',
+              'weight' => 1,
+            ),
+            2 => array(
+              'title' => t('Technology studies'),
+              'description' => '',
+              'weight' => 1,
+            ),
+          ),
+        ),
+        7 => array(
+          'title' => t('Physical training'),
+          'description' => '',
+          'weight' => 7,
+          'terms' => array(
+            0 => array(
+              'title' => t('Physical training'),
+              'description' => '',
+              'weight' => 0,
+            ),
+          ),
+        ),
+      );
+    break;
+    case 'lm_license_voc':
+      $terms = array(
+        0 => array(
+          'title' => t('All rights reserved'),
+          'description' => '',
+          'weight' => 0,
+        ),
+        1 => array(
+          'title' => t('Attribution alone'),
+          'description' => '',
+          'weight' => 1,
+        ),
+        2 => array(
+          'title' => t('Attribution + NoDerivatives'),
+          'description' => '',
+          'weight' => 2,
+        ),
+        3 => array(
+          'title' => t('Attribution + ShareAlike'),
+          'description' => '',
+          'weight' => 3,
+        ),
+        4 => array(
+          'title' => t('Attribution + Noncommercial'),
+          'description' => '',
+          'weight' => 4,
+        ),
+        5 => array(
+          'title' => t('Attribution + Noncommercial + NoDerivatives'),
+          'description' => '',
+          'weight' => 5,
+        ),
+        6 => array(
+          'title' => t('Attribution + Noncommercial + ShareAlike'),
+          'description' => '',
+          'weight' => 6,
+        ),
+      );
+    break;
+  }
+
+  return $terms;
+}
+
+/**
  * [Field types that need to be created are defined here]
  * @return [array] [returns an array of field options]
  */
@@ -57,7 +355,17 @@ function learnmixer_get_fields_and_options(){
       'field_name' => 'lm_field_description',
       'type' => 'text_long',
       'cardinality' => 1,
-      'settings' => array(),
+      'settings' => array(
+        'max_length' => '',
+      ),
+    ),
+    'lm_field_text_body' => array(
+      'field_name' => 'lm_field_text_body',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'settings' => array(
+        'max_length' => '',
+      ),
     ),
     'lm_field_featured_image' => array(
       'field_name' => 'lm_field_featured_image',
@@ -68,11 +376,57 @@ function learnmixer_get_fields_and_options(){
         'default_image' => 0,
       ),
     ),
+    'lm_field_embed' => array(
+      'field_name' => 'lm_field_embed',
+      'type' => 'text_long',
+      'cardinality' => 1,
+      'settings' => array(
+        'max_length' => '',
+      ),
+    ),
     'lm_field_url' => array(
       'field_name' => 'lm_field_url',
       'type' => 'url',
       'cardinality' => 1,
       'settings' => array(),
+    ),
+    'lm_field_age_group_min' => array(
+      'field_name' => 'lm_field_age_group_min',
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'settings' => array(),
+    ),
+    'lm_field_age_group_max' => array(
+      'field_name' => 'lm_field_age_group_max',
+      'type' => 'number_integer',
+      'cardinality' => 1,
+      'settings' => array(),
+    ),
+    'lm_field_topic' => array(
+      'field_name' => 'lm_field_topic',
+      'type' => 'text',
+      'cardinality' => 1,
+      'settings' => array(),
+    ),
+    'lm_field_subject' => array(
+      'field_name' => 'lm_field_subject',
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'vocabulary' => 'lm_subject_voc',
+        ),
+      ),
+    ),
+    'lm_field_license' => array(
+      'field_name' => 'lm_field_license',
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'vocabulary' => 'lm_license_voc',
+        ),
+      ),
     ),
   );
 
@@ -84,7 +438,7 @@ function learnmixer_get_fields_and_options(){
  * @param  [string] $field_name  [field name]
  * @param  [string] $field_type  [field type settings]
  * @param  [integer] $cardinality [cardinality setting]
- * @param  array  $settings    [Field settings if needed]
+ * @param  [array]  $settings    [Field settings if needed]
  */
 function learnmixer_create_field($field_name, $field_type, $cardinality, $settings = array()){
   if(!field_info_field($field_name)){

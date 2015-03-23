@@ -1,0 +1,10 @@
+name = Learnmixer microcontent types
+description = Needed microcontent types for Learnmixer
+package = Learnmixer
+core = 7.x
+
+
+files[] = lm_microcontent_types.install
+files[] = lm_microcontent_types.module
+
+dependencies[] = learnmixer

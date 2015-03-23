@@ -8,3 +8,5 @@ files[] = learnmixer.install
 files[] = learnmixer.module
 
 dependencies[] = url
+dependencies[] = jquery_update
+
