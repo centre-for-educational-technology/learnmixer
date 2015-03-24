@@ -13,10 +13,9 @@ function learnmixer_home_page(){
     '#markup' => t('Welcome to Learnmixer!'),
   );
 
-
-  $fields = field_info_fields();
-  dpm($fields);
-  $instances = field_info_instances();
-  dpm($instances);
+  // $fields = field_info_fields();
+  // dpm($fields);
+  // $instances = field_info_instances();
+  // dpm($instances);
   return $content;
 }

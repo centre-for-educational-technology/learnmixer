@@ -1,0 +1,48 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function lm_struct_elem_install(){
+  if(!in_array('lm_struct_elem', node_type_get_names())){
+    $type = array(
+      'type' => 'lm_struct_elem',
+      'name' => t('Structure element'),
+      'base' => 'node_content',
+      'custom' => true,
+      'modified' => false,
+      'locked' => false,
+      'module' => 'lm_struct_elem',
+      'has_title' => true,
+      'title_label' => t('Title'),
+    );
+
+    $type = node_type_set_defaults($type);
+    node_type_save($type);
+    variable_set('comment_lm_struct_elem', COMMENT_NODE_CLOSED);
+  }
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function lm_struct_elem_uninstall(){
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition("n.type", 'lm_struct_elem')
+    ->execute();
+
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  // delete all nodes
+  node_delete_multiple($nids);
+
+
+  node_type_delete('lm_struct_elem');
+
+  //purge all field information
+  field_purge_batch(1000);
+}

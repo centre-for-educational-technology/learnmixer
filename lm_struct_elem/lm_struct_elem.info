@@ -1,0 +1,12 @@
+name = Learnmixer Structural element
+description = Structural element for Learnmixer
+package = Learnmixer
+core = 7.x
+
+
+files[] = lm_struct_elem.install
+files[] = lm_struct_elem.module
+
+dependencies[] = learnmixer
+
+

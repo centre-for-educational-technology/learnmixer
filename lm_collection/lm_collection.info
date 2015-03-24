@@ -9,3 +9,4 @@ files[] = lm_collection.module
 
 dependencies[] = learnmixer
 dependencies[] = lm_microcontent_types
+dependencies[] = lm_struct_elem

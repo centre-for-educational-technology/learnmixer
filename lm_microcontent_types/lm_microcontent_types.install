@@ -52,7 +52,7 @@ function lm_microcontent_types_uninstall(){
 
       $instances = field_info_instances('node', $content_type);
       foreach ($instances as $instance_name => $instance){
-        field_delete_instance($instance);
+        field_delete_instance($instance, false);
       }
 
       node_type_delete($content_type);
