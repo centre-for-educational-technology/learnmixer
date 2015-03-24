@@ -1,5 +1,5 @@
 name = Learnmixer Structural element
-description = Structural element for Learnmixer
+description = Structural element for Learnmixer. Creates schema for holding relationships between collections and microcontent
 package = Learnmixer
 core = 7.x
 

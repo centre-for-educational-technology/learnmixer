@@ -46,3 +46,63 @@ function lm_struct_elem_uninstall(){
   //purge all field information
   field_purge_batch(1000);
 }
+
+
+/**
+ * Implements hook_schema().
+ */
+function lm_struct_elem_schema(){
+  $schema['lm_relationships'] = array(
+    'description' => 'This table holds relationship data between Learnmixer Collections and Microcontent types',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The primary identifier of a created node',
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'type' => array(
+        'description' => 'Content type of a node',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => true,
+        'default' => 0,
+      ),
+      'parent' => array(
+        'description' => 'Parent nid this element belongs to. 0 if highest level',
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'default' => 0,
+      ),
+      'hidden' => array(
+        'description' => '0 - visible, 1 - hidden',
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'default' => 0,
+      ),
+      'weight' => array(
+        'description' => 'Where to display part',
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'default' => 0,
+      ),
+      'collection' => array(
+        'description' => 'nid of a collection this part belongs to. 0 if it is highest level collection',
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'lm_col_nid' => array('nid'),
+      'lm_col_type' => array('type'),
+      'lm_col_col' => array('collection'),
+    ),
+  );
+
+  return $schema;
+}
