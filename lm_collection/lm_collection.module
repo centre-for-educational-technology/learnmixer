@@ -1,5 +1,69 @@
 <?php
 
+/**
+ * Implements hook_menu().
+ */
+function lm_collection_menu(){
+  $items['collection/%/edit'] = array(
+    'title' => t('BATMAN'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'lm_collection_edit_page',
+    'page arguments' => array(1),
+    'access callback' => true,
+    'file' => 'lm_collection.pages.php'
+  );
+  $items['collection/add/structelem/%/%'] = array(
+    'type' => MENU_CALLBACK,
+    'access callback' => true,
+    'page callback' => 'lm_collection_add_new_struct_element',
+    'page arguments' => array(3, 4),
+  );
+  return $items;
+}
+
+
+function lm_collection_add_new_struct_element($parent, $collection){
+  $response = array(
+    'success' => false,
+  );
+  global $user;
+  $uid = $user->uid;
+
+
+  if(isset($_POST)){
+    $title = $_POST['structelemTitle'];
+
+    $structnode = new stdClass();
+
+    $structnode->title = $title;
+    $structnode->type = 'lm_struct_elem';
+    node_object_prepare($structnode);
+    $structnode->language = LANGUAGE_NONE;
+    $structnode->uid = $uid;
+    $structnode->status = 1;
+    $structnode->promote = 0;
+    $structnode->comment = 0;
+    $structnode = node_submit($structnode);
+    node_save($structnode);
+
+    $result = db_insert('lm_relationships')
+      ->fields(array(
+          'nid' => $structnode->nid,
+          'type' => 'lm_struct_elem',
+          'parent' => $parent,
+          'hidden' => 0,
+          'weight' => 1,
+          'collection' => $collection,
+        ))->execute();
+    $response['success'] = true;
+  }else{
+    return drupal_json_output($response);
+  }
+
+
+  return drupal_json_output($response);
+}
+
 
 /**
  * Implements hook_form_alter().
@@ -18,6 +82,45 @@ function lm_collection_form_alter(&$form, &$form_state, $form_id){
     }
     array_unshift($options, t('- Select a value -'));
     $form['lm_field_subject'][LANGUAGE_NONE]['#options'] = $options;
+    $form['actions']['submit']['#submit'][] = '_lm_collection_new_submit_handler';
   }
 
 }
+
+
+function _lm_collection_new_submit_handler($form, &$form_state){
+  $result = db_insert('lm_relationships')
+        ->fields(array(
+          'nid' => $form_state['nid'],
+          'type' => 'lm_collection',
+          'parent' => 0,
+          'hidden' => 0,
+          'weight' => 1,
+          'collection' => $form_state['nid'],
+        ))->execute();
+  $form_state['redirect'] = 'collection/'.$form_state['nid'].'/edit';
+}
+
+/**
+ * Implements hook_theme()
+ */
+// function lm_collection_theme($existing, $type, $theme, $path) {
+//   $theme = array();
+//   $theme['node__lm_collection'] = array(
+//     'render element' => 'content',
+//     'base hook' => 'node',
+//     'template' => 'node--lm_collection',
+//     'path' => drupal_get_path('module', 'lm_collection').'/templates',
+//   );
+
+//   $theme['lm_collection_node_form'] = array(
+//     'arguments' => array(
+//       'form' => NULL,
+//     ),
+//     'template' => 'lm_collection-node-form',
+//     'render element' => 'form',
+//     'path' => drupal_get_path('module', 'lm_collection').'/templates',
+//   );
+
+//   return $theme;
+// }

@@ -1,0 +1,23 @@
+.collection-outer {
+  padding: 10px;
+}
+
+.collection-row {
+  padding-top: 10px;
+}
+
+.collection-label {
+  font-weight: bold;
+}
+
+.tags-label a{
+  color: white;
+}
+
+.tags-label a:hover{
+  color: white;
+}
+
+.collection-new-elements {
+  display: none;
+}

@@ -94,13 +94,13 @@ function lm_collection_add_field_instances(){
     ),
     'lm_field_age_group_min' => array(
       'field_name' => 'lm_field_age_group_min',
-      'label' => t('Age from:'),
+      'label' => t('Age from'),
       'description' => t(''),
       'required' => true,
     ),
     'lm_field_age_group_max' => array(
       'field_name' => 'lm_field_age_group_max',
-      'label' => t('Age until:'),
+      'label' => t('Age until'),
       'description' => t(''),
       'required' => true,
     ),
