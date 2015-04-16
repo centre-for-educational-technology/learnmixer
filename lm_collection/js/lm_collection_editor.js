@@ -3,11 +3,6 @@
     attach: function(context, settings) {
       function lmCollectionEditorAttachListeners(elem) {
         elem.find('.add-new-textblock').on('click', function(event){
-          // var textblock = $('.lm-textblock-to-clone').clone();
-          // textblock.removeAttr('style');
-          // textblock.removeClass('lm-hide-textblock');
-
-          // textblock.attr('id', 'testid');
 
           var structelem = $(this).data('structelem');
           var collection = $(this).data('collection');
@@ -18,7 +13,7 @@
             cache: false,
             success: function(response){
               var textblock = response;
-
+              // @todo every textblock needs to have a different ID
               $('.new-mct-in-chapter').append(textblock);
               CKEDITOR.replace('textarea-id-to-ck', {
                 toolbar :
@@ -46,7 +41,7 @@
       $('.popover-markup').on({
         click: function(){
           $('.submit-structure-elem').css('display', 'block');
-          // võibolla chapteri ja kollektsiooni alla lisamiseks erinevad endpointid.
+
 
           var collection = $(this).parent().find(':input').data('collection');
           var value = $(this).parent().find(':input').val();
@@ -79,12 +74,6 @@
         }
       },'.submit-structure-elem');
 
-      // $('.add-structure-elem').on('click', function(){
-
-      //   if($(this).data('first')==true) {
-
-      //   }
-      // });
     }
   }
 })(jQuery);

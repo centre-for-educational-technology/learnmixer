@@ -37,7 +37,7 @@ function lm_collection_node_view($node, $view_mode, $langcode){
       case 'lm_collection':
         dpm('Overwrite this view');
 
-        dpm($node, __FUNCTION__);
+        dpm($node);
 
       break;
     }
@@ -187,6 +187,8 @@ function lm_get_structure_array($collection, $structnode){
     '#prefix' => '<div class="col-md-5 collection-label">',
     '#suffix' => '</div>',
   );
+
+  //@todo - Toolbox needs a container
 
   $content['container']['chapter-toolbox-row'] = array(
     '#type' => 'container',
