@@ -38,6 +38,10 @@ function lm_collection_uninstall(){
   field_purge_batch(1000);
 }
 
+
+/**
+ * [Creates lm_collection content type]
+ */
 function lm_collection_create_content_type(){
   if(!in_array('lm_collection', node_type_get_names())){
     $type = array(
@@ -57,6 +61,9 @@ function lm_collection_create_content_type(){
   node_type_save($type);
 }
 
+/**
+ * [creates required field instances]
+ */
 function lm_collection_add_field_instances(){
   $instances = array(
     'lm_field_description' => array(

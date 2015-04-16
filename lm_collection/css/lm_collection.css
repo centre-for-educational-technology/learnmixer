@@ -21,3 +21,7 @@
 .collection-new-elements {
   display: none;
 }
+
+.lm-hide-textblock {
+  display: none !important;
+}

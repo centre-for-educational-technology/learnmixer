@@ -4,11 +4,11 @@
  * Implements hook_menu().
  */
 function lm_collection_menu(){
-  $items['collection/%/edit'] = array(
+  $items['collection/%/create'] = array(
     'title' => t('BATMAN'),
     'type' => MENU_CALLBACK,
-    'page callback' => 'lm_collection_edit_page',
-    'page arguments' => array(1),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('lm_collection_create_page', 1),
     'access callback' => true,
     'file' => 'lm_collection.pages.php'
   );
@@ -18,10 +18,38 @@ function lm_collection_menu(){
     'page callback' => 'lm_collection_add_new_struct_element',
     'page arguments' => array(3, 4),
   );
+  $items['collection/add/textblock/%/%'] = array(
+    'type' => MENU_CALLBACK,
+    'access callback' => true,
+    'page callback' => 'lm_collection_add_new_textblock',
+    'page arguments' => array(3, 4),
+  );
   return $items;
 }
 
+/**
+ * Implements hook_node_view().
+ */
+function lm_collection_node_view($node, $view_mode, $langcode){
+  dpm($node);
+  if($view_mode=='full'){
+    switch($node->type){
+      case 'lm_collection':
+        dpm('Overwrite this view');
 
+        dpm($node, __FUNCTION__);
+
+      break;
+    }
+  }
+}
+
+/**
+ * [Adds a new structural element]
+ * @param  [int] $parent     [Parent item identifier]
+ * @param  [int] $collection [Collection identifier]
+ * @return [json]             [Structural element]
+ */
 function lm_collection_add_new_struct_element($parent, $collection){
   $response = array(
     'success' => false,
@@ -44,6 +72,11 @@ function lm_collection_add_new_struct_element($parent, $collection){
     $structnode->promote = 0;
     $structnode->comment = 0;
     $structnode = node_submit($structnode);
+
+    //@todo - Check if node actually saved :)
+
+    //@todo - Check for permissions
+
     node_save($structnode);
 
     $result = db_insert('lm_relationships')
@@ -56,12 +89,145 @@ function lm_collection_add_new_struct_element($parent, $collection){
           'collection' => $collection,
         ))->execute();
     $response['success'] = true;
+    $response['html'] = drupal_render(lm_get_structure_array($collection, $structnode));
   }else{
     return drupal_json_output($response);
   }
-
-
   return drupal_json_output($response);
+}
+/**
+ * [Adds a new textblock to structural element]
+ * @param  [int] $structnid  [Struct element identifier]
+ * @param  [int] $collection [Collection identifier]
+ * @return [json]             [Text-block]
+ */
+function lm_collection_add_new_textblock($structnid, $collection){
+  $content = array();
+  global $user;
+  $uid = $user->uid;
+  $tbnode = new stdClass();
+  $tbnode->type = 'lm_textblock';
+  node_object_prepare($tbnode);
+  $tbnode->lm_field_text_body[LANGUAGE_NONE][0]['value'] = '';
+  $tbnode->lm_field_text_body[LANGUAGE_NONE][0]['safe_value'] = '';
+  $tbnode->lm_field_text_body['und'][0]['format'] = 'filtered_html';
+  $tbnode->language = LANGUAGE_NONE;
+  $tbnode->uid = $uid;
+  $tbnode->status = 1;
+  $tbnode->promote = 0;
+  $tbnode->comment = 0;
+  $tbnode = node_submit($tbnode);
+
+  node_save($tbnode);
+
+
+  $result = db_insert('lm_relationships')
+    ->fields(array(
+        'nid' => $tbnode->nid,
+        'type' => 'lm_textblock',
+        'parent' => $structnid,
+        'hidden' => 0,
+        'weight' => 1,
+        'collection' => $collection,
+      ))->execute();
+
+  $content['textarea'] = array(
+    '#type' => 'textarea',
+    '#cols' => 40,
+    '#attributes' => array(
+      'class' => array(
+        'textarea-to-ck'
+      ),
+      'id' => array(
+        'textarea-id-to-ck'
+      ),
+    ),
+  );
+
+  return drupal_json_output(drupal_render($content));
+}
+
+/**
+ * [Return structural element as drupal array]
+ * @param  [int] $collection [Collection identifier]
+ * @param  [int] $structnode [Structural node identifier]
+ * @return [array]             [Structure element array]
+ */
+function lm_get_structure_array($collection, $structnode){
+  $content = array();
+  $content['container'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'container-fluid',
+        'collection-outer',
+        'panel',
+        'panel-default',
+      ),
+    ),
+  );
+  $content['container']['chapter-title-row'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array(
+        'container-fluid',
+        'row',
+      ),
+    ),
+  );
+  $content['container']['chapter-title-row']['icon'] = array(
+    '#type' => 'markup',
+    '#markup' => '<i title="glyphicon-chevron-down" class="icon glyphicon glyphicon-chevron-down" aria-hidden="true"></i>',
+    '#prefix' =>'<div class="col-md-1 lm-icon">',
+    '#suffix' => '</div>',
+  );
+  $content['container']['chapter-title-row']['title'] = array(
+    '#type' => 'markup',
+    '#markup' => $structnode->title,
+    '#prefix' => '<div class="col-md-5 collection-label">',
+    '#suffix' => '</div>',
+  );
+
+  $content['container']['chapter-toolbox-row'] = array(
+    '#type' => 'container',
+    '#prefix' => '<div class="row">',
+    '#suffix' => '</div>',
+    '#attributes' => array(
+      'class' => array(
+        'btn-group',
+        'add-new-toolbox'
+      ),
+      'role' => array(
+        'group',
+      ),
+    ),
+  );
+
+  $content['container']['chapter-toolbox-row']['text'] = array(
+    '#type' => 'markup',
+    '#markup' => '<button type="button" data-collection="'.$collection.'" data-structelem="'.$structnode->nid.'" class="btn btn-default add-new-textblock">'.t('Text').'</button>',
+  );
+  $content['container']['chapter-toolbox-row']['url'] = array(
+    '#type' => 'markup',
+    '#markup' => '<button type="button" data-collection="'.$collection.'" data-structelem="'.$structnode->nid.'" class="btn btn-default add-new-url">'.t('Link').'</button>',
+  );
+  $content['container']['chapter-toolbox-row']['embed'] = array(
+    '#type' => 'markup',
+    '#markup' => '<button type="button" data-collection="'.$collection.'" data-structelem="'.$structnode->nid.'" class="btn btn-default add-new-embed">'.t('Embed').'</button>',
+  );
+  $content['container']['new-mct-in-chapter'] = array(
+    '#type' => 'container',
+    '#prefix' => '<div class="row">',
+    '#suffix' => '</div>',
+    '#attributes' => array(
+      'class' => array(
+        'new-mct-in-chapter',
+      ),
+    ),
+  );
+
+
+  return $content;
 }
 
 
@@ -87,9 +253,18 @@ function lm_collection_form_alter(&$form, &$form_state, $form_id){
 
 }
 
-
+/**
+ * [New submit handler for first creating a collection, which redirects to a custom collection editing page]
+ * @param  [array] $form        [Drupal form array]
+ * @param  [array] &$form_state [Drupal form_state array]
+ */
 function _lm_collection_new_submit_handler($form, &$form_state){
-  $result = db_insert('lm_relationships')
+  $result = db_select('lm_relationships', 'lmr')
+    ->fields('lmr', array('nid'))
+    ->condition('lmr.nid', $form_state['nid'])->execute()->fetchAssoc();
+  if(empty($result)){
+    // Doesn't exists
+    $result = db_insert('lm_relationships')
         ->fields(array(
           'nid' => $form_state['nid'],
           'type' => 'lm_collection',
@@ -98,29 +273,9 @@ function _lm_collection_new_submit_handler($form, &$form_state){
           'weight' => 1,
           'collection' => $form_state['nid'],
         ))->execute();
-  $form_state['redirect'] = 'collection/'.$form_state['nid'].'/edit';
+  }
+
+
+  $form_state['redirect'] = 'collection/'.$form_state['nid'].'/create';
 }
 
-/**
- * Implements hook_theme()
- */
-// function lm_collection_theme($existing, $type, $theme, $path) {
-//   $theme = array();
-//   $theme['node__lm_collection'] = array(
-//     'render element' => 'content',
-//     'base hook' => 'node',
-//     'template' => 'node--lm_collection',
-//     'path' => drupal_get_path('module', 'lm_collection').'/templates',
-//   );
-
-//   $theme['lm_collection_node_form'] = array(
-//     'arguments' => array(
-//       'form' => NULL,
-//     ),
-//     'template' => 'lm_collection-node-form',
-//     'render element' => 'form',
-//     'path' => drupal_get_path('module', 'lm_collection').'/templates',
-//   );
-
-//   return $theme;
-// }
